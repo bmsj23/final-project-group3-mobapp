@@ -5,8 +5,9 @@ import { radius } from '../../../theme/radius';
 import { spacing } from '../../../theme/spacing';
 
 export const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#020617' },
+  root: { flex: 1, backgroundColor: '#FFFFFF' },
   kav: { flex: 1 },
+  keyboardBg: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 300, backgroundColor: '#FFFFFF' },
   layout: { flex: 1, justifyContent: 'flex-end' },
   hero: {
     position: 'absolute',
