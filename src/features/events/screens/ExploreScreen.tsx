@@ -91,7 +91,7 @@ export function ExploreScreen({ navigation }: ExploreScreenProps) {
   return (
     <ScreenContainer bg={colors.bgDark} noPadding>
       <StatusBar style="light" />
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.keyboardWrap}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'height' : undefined} style={styles.keyboardWrap}>
         <View style={styles.screen}>
           <ScrollView
             bounces={false}
@@ -110,6 +110,7 @@ export function ExploreScreen({ navigation }: ExploreScreenProps) {
           >
             <DarkHero
               eyebrow="Discover"
+              extraBottomInset={24}
               title="Find your next event"
               rightSlot={<Ionicons color="#93C5FD" name="compass" size={24} />}
               bottomSlot={
@@ -153,13 +154,7 @@ export function ExploreScreen({ navigation }: ExploreScreenProps) {
                 </View>
               </ScrollView>
 
-              {errorMessage ? (
-                <EmptyStateCard body={errorMessage} icon="cloud-offline-outline" title="Unable to load explore data" />
-              ) : isLoading ? (
-                <EmptyStateCard body="Loading events and categories for you." icon="hourglass-outline" title="Loading explore" />
-              ) : filteredEvents.length === 0 ? (
-                <EmptyStateCard body="Try a different search or clear the current category filter." icon="search-outline" title="No matching events" />
-              ) : (
+              {filteredEvents.length > 0 && !isLoading && !errorMessage ? (
                 <View style={styles.list}>
                   {filteredEvents.map((event) => (
                     <EventListCard
@@ -171,6 +166,16 @@ export function ExploreScreen({ navigation }: ExploreScreenProps) {
                       onToggleFavorite={() => void handleToggleFavorite(event.id)}
                     />
                   ))}
+                </View>
+              ) : (
+                <View style={styles.stateWrap}>
+                  {errorMessage ? (
+                    <EmptyStateCard body={errorMessage} icon="cloud-offline-outline" title="Unable to load explore data" />
+                  ) : isLoading ? (
+                    <EmptyStateCard body="Loading events and categories for you." icon="hourglass-outline" title="Loading explore" />
+                  ) : (
+                    <EmptyStateCard body="Try a different search or clear the current category filter." icon="search-outline" title="No matching events" />
+                  )}
                 </View>
               )}
             </View>
@@ -223,6 +228,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xl,
   },
   fullBleedScroll: {
+    flex: 0,
     marginHorizontal: -layout.screenPaddingH,
   },
   categoryRow: {
@@ -232,5 +238,10 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: spacing.md,
+  },
+  stateWrap: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
   },
 });
