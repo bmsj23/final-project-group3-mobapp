@@ -18,6 +18,7 @@ type DarkHeroProps = {
   avatarInitials?: string;
   rightSlot?: ReactNode;
   bottomSlot?: ReactNode;
+  extraBottomInset?: number;
 };
 
 const AVATAR_SIZE = 52;
@@ -30,6 +31,7 @@ export function DarkHero({
   avatarInitials,
   rightSlot,
   bottomSlot,
+  extraBottomInset = 0,
 }: DarkHeroProps) {
   const insets = useSafeAreaInsets();
   const showAvatar = Boolean(avatarUri ?? avatarInitials);
@@ -39,7 +41,14 @@ export function DarkHero({
       colors={[colors.gradient.blackLinear.start, colors.gradient.blackLinear.end]}
       end={{ x: 1, y: 1 }}
       start={{ x: 0, y: 0 }}
-      style={[styles.hero, { paddingTop: insets.top + spacing.md }]}
+      style={[
+        styles.hero,
+        {
+          marginBottom: -extraBottomInset,
+          paddingTop: insets.top + spacing.md,
+          paddingBottom: spacing.xl + extraBottomInset,
+        },
+      ]}
     >
       <View style={styles.topRow}>
         {showAvatar ? (
@@ -77,7 +86,6 @@ const styles = StyleSheet.create({
   hero: {
     overflow: 'hidden',
     paddingHorizontal: layout.screenPaddingH,
-    paddingBottom: spacing.xl,
   },
   topRow: {
     alignItems: 'center',
