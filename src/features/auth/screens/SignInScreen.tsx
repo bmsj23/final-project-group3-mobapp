@@ -159,7 +159,7 @@ export function SignInScreen({ navigation }: SignInScreenProps) {
               </Text>
 
               <View style={styles.topTagRow}>
-                {['Access', 'Momentum', 'Return'].map((item) => (
+                {['Discover', 'Book', 'Vibe'].map((item) => (
                   <Text key={item} style={styles.topTagText}>
                     • {item}
                   </Text>

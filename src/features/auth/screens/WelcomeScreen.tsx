@@ -70,13 +70,15 @@ export function WelcomeScreen({ navigation }: WelcomeScreenProps) {
           </Text>
         </View>
 
-        <View style={styles.statsRow}>
-          {STATS.map((stat) => (
-            <View key={stat.label} style={styles.statCard}>
-              <Text style={styles.statValue}>{stat.value}</Text>
-              <Text style={styles.statLabel}>{stat.label}</Text>
-            </View>
-          ))}
+        <View style={styles.statsWrap}>
+          <View style={styles.statsRow}>
+            {STATS.map((stat) => (
+              <View key={stat.label} style={styles.statCard}>
+                <Text style={styles.statValue}>{stat.value}</Text>
+                <Text style={styles.statLabel}>{stat.label}</Text>
+              </View>
+            ))}
+          </View>
         </View>
       </Animated.View>
 
@@ -123,13 +125,14 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#020617' },
   hero: {
     flex: 1,
-    paddingTop: 56,
+    paddingTop: 84,
     paddingHorizontal: spacing.xl,
     paddingBottom: 32,
     justifyContent: 'flex-start',
   },
   heroTop: {
-    gap: 14,
+    gap: 22,
+    paddingTop: 20,
   },
   logoText: {
     fontFamily: 'Inter_700Bold',
@@ -138,7 +141,7 @@ const styles = StyleSheet.create({
     letterSpacing: 4,
   },
   headlineBlock: {
-    marginTop: spacing.lg,
+    marginTop: -2,
   },
   h1: {
     fontFamily: 'Inter_700Bold',
@@ -188,13 +191,18 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 28,
     color: '#E2E8F0',
-    marginTop: 8,
-    marginBottom: 24,
+    marginTop: 0,
+    marginBottom: 20,
+  },
+  statsWrap: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingTop: 24,
+    paddingBottom: 24,
   },
   statsRow: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 40,
     alignSelf: 'center',
     width: '100%',
   },
@@ -229,8 +237,8 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingHorizontal: spacing.xl,
-    paddingTop: 14,
-    paddingBottom: 32,
+    paddingTop: 28,
+    paddingBottom: 40,
     borderTopWidth: 1,
     borderColor: 'rgba(96,165,250,0.18)',
     shadowColor: '#1D4ED8',
@@ -254,7 +262,7 @@ const styles = StyleSheet.create({
     letterSpacing: 3,
     textTransform: 'uppercase',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   sheetHeadline: {
     fontFamily: 'Inter_700Bold',
@@ -263,12 +271,12 @@ const styles = StyleSheet.create({
     color: '#0F172A',
     letterSpacing: -0.8,
     textAlign: 'center',
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
   },
   sheetHeadlineAccent: {
     color: '#0F172A',
   },
-  btnStack: { gap: 10, marginBottom: 10 },
+  btnStack: { gap: 14, marginBottom: 14 },
   btnPrimary: {
     borderRadius: radius.md,
     overflow: 'hidden',
