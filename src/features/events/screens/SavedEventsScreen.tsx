@@ -253,6 +253,7 @@ export function SavedEventsScreen({ navigation }: SavedEventsScreenProps) {
       >
         <DarkHero
           eyebrow="Personal Collection"
+          extraBottomInset={24}
           title="Saved Events"
           rightSlot={
             <View style={styles.heroChip}>
