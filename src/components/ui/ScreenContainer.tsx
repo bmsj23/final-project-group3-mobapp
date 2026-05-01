@@ -57,6 +57,8 @@ export function ScreenContainer({
 
   return (
     <SafeAreaView edges={safeAreaEdges} style={[styles.safeArea, bgStyle]}>
+      {/* White backing prevents the colored safeArea bg from showing through keyboard rounded corners */}
+      {bg ? <View pointerEvents="none" style={styles.keyboardBackground} /> : null}
       {keyboardAvoiding ? (
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -88,5 +90,13 @@ const styles = StyleSheet.create({
   },
   keyboardAvoider: {
     flex: 1,
+  },
+  keyboardBackground: {
+    backgroundColor: colors.background,
+    bottom: 0,
+    height: 300,
+    left: 0,
+    position: 'absolute',
+    right: 0,
   },
 });
