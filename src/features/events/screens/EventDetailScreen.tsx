@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Animated,
   Dimensions,
@@ -45,12 +46,50 @@ import type { EventDetail } from '../types';
 import type { BookingSummary } from '../../bookings/types';
 
 type EventDetailScreenProps = NativeStackScreenProps<AppStackParamList, 'EventDetail'>;
+type BookingActionKey = 'register' | 'update' | 'cancel';
+type BookingActionModalState =
+  | { phase: 'loading'; action: BookingActionKey }
+  | { phase: 'result'; action: BookingActionKey; success: boolean; message: string };
 
 const STATUS_COLORS: Record<string, { text: string; bg: string }> = {
   upcoming:  { text: '#3B82F6', bg: 'rgba(59,130,246,0.1)'  },
   ongoing:   { text: '#10B981', bg: 'rgba(16,185,129,0.1)'  },
   completed: { text: '#94A3B8', bg: 'rgba(148,163,184,0.1)' },
   cancelled: { text: '#EF4444', bg: 'rgba(239,68,68,0.1)'   },
+};
+
+const BOOKING_ACTION_COPY: Record<BookingActionKey, {
+  loadingTitle: string;
+  loadingMessage: string;
+  successTitle: string;
+  successMessage: string;
+  errorTitle: string;
+  errorFallback: string;
+}> = {
+  register: {
+    loadingTitle: 'Registering your tickets…',
+    loadingMessage: 'Please wait while we reserve your slot.',
+    successTitle: 'Registration successful',
+    successMessage: 'You are now registered for this event.',
+    errorTitle: 'Unable to register',
+    errorFallback: 'Could not register for this event.',
+  },
+  update: {
+    loadingTitle: 'Updating your booking…',
+    loadingMessage: 'Applying your new ticket count.',
+    successTitle: 'Booking updated',
+    successMessage: 'Your ticket count has been updated.',
+    errorTitle: 'Unable to update booking',
+    errorFallback: 'Could not update your booking.',
+  },
+  cancel: {
+    loadingTitle: 'Cancelling your booking…',
+    loadingMessage: 'Releasing your reserved slots.',
+    successTitle: 'Booking cancelled',
+    successMessage: 'Your booking has been cancelled.',
+    errorTitle: 'Unable to cancel booking',
+    errorFallback: 'Could not cancel your booking.',
+  },
 };
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -120,25 +159,34 @@ export function EventDetailScreen({ navigation, route }: EventDetailScreenProps)
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [viewerVisible, setViewerVisible] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
+  const [bookingActionModal, setBookingActionModal] = useState<BookingActionModalState | null>(null);
 
   const sheetAnim = useRef(new Animated.Value(0)).current;
   const viewerListRef = useRef<FlatList<string> | null>(null);
 
-  const loadEvent = useCallback(async () => {
-    setIsLoading(true);
+  const loadEvent = useCallback(async (showLoader = true) => {
+    if (showLoader) {
+      setIsLoading(true);
+    }
     try {
       const { data, error } = await fetchEventById(route.params.eventId);
       if (error) throw error;
       if (!data) throw new Error('Event not found or has been removed.');
       setEvent(data);
       setErrorMessage(null);
-      Animated.spring(sheetAnim, {
-        toValue: 1, useNativeDriver: true, tension: 65, friction: 10,
-      }).start();
+      if (showLoader) {
+        Animated.spring(sheetAnim, {
+          toValue: 1, useNativeDriver: true, tension: 65, friction: 10,
+        }).start();
+      }
     } catch (err) {
-      setErrorMessage(getErrorMessage(err, 'Unable to load event details.'));
+      if (showLoader) {
+        setErrorMessage(getErrorMessage(err, 'Unable to load event details.'));
+      }
     } finally {
-      setIsLoading(false);
+      if (showLoader) {
+        setIsLoading(false);
+      }
     }
   }, [route.params.eventId]);
 
@@ -226,7 +274,7 @@ export function EventDetailScreen({ navigation, route }: EventDetailScreenProps)
   }, [event, toggleFavorite]);
 
   const refreshAfterBookingMutation = useCallback(async () => {
-    await Promise.all([loadEvent(), loadBooking()]);
+    await Promise.all([loadEvent(false), loadBooking()]);
   }, [loadBooking, loadEvent]);
 
   const adjustTicketCount = useCallback((delta: number) => {
@@ -238,6 +286,23 @@ export function EventDetailScreen({ navigation, route }: EventDetailScreenProps)
     });
   }, [maxSelectableTickets]);
 
+  const showBookingActionLoading = useCallback((action: BookingActionKey) => {
+    setBookingActionModal({ phase: 'loading', action });
+  }, []);
+
+  const showBookingActionResult = useCallback(
+    (action: BookingActionKey, success: boolean, message?: string) => {
+      const copy = BOOKING_ACTION_COPY[action];
+      setBookingActionModal({
+        phase: 'result',
+        action,
+        success,
+        message: message?.trim() ? message : (success ? copy.successMessage : copy.errorFallback),
+      });
+    },
+    [],
+  );
+
   const handleRegisterBooking = useCallback(async () => {
     if (!event || !profile?.id) {
       Alert.alert('Sign in required', 'Please sign in to register for this event.');
@@ -245,16 +310,22 @@ export function EventDetailScreen({ navigation, route }: EventDetailScreenProps)
     }
 
     setIsRegistering(true);
+    showBookingActionLoading('register');
     try {
       const { error } = await registerForEvent(event.id, selectedTicketCount);
       if (error) throw error;
       await refreshAfterBookingMutation();
+      showBookingActionResult('register', true);
     } catch (error) {
-      Alert.alert('Unable to register', getErrorMessage(error, 'Could not register for this event.'));
+      showBookingActionResult(
+        'register',
+        false,
+        getErrorMessage(error, BOOKING_ACTION_COPY.register.errorFallback),
+      );
     } finally {
       setIsRegistering(false);
     }
-  }, [event, profile?.id, refreshAfterBookingMutation, selectedTicketCount]);
+  }, [event, profile?.id, refreshAfterBookingMutation, selectedTicketCount, showBookingActionLoading, showBookingActionResult]);
 
   const handleUpdateBooking = useCallback(async () => {
     if (!myBooking) {
@@ -262,16 +333,22 @@ export function EventDetailScreen({ navigation, route }: EventDetailScreenProps)
     }
 
     setIsUpdatingBooking(true);
+    showBookingActionLoading('update');
     try {
       const { error } = await updateBookingTickets(myBooking.id, selectedTicketCount);
       if (error) throw error;
       await refreshAfterBookingMutation();
+      showBookingActionResult('update', true);
     } catch (error) {
-      Alert.alert('Unable to update booking', getErrorMessage(error, 'Could not update your booking.'));
+      showBookingActionResult(
+        'update',
+        false,
+        getErrorMessage(error, BOOKING_ACTION_COPY.update.errorFallback),
+      );
     } finally {
       setIsUpdatingBooking(false);
     }
-  }, [myBooking, refreshAfterBookingMutation, selectedTicketCount]);
+  }, [myBooking, refreshAfterBookingMutation, selectedTicketCount, showBookingActionLoading, showBookingActionResult]);
 
   const handleCancelBooking = useCallback(async () => {
     if (!myBooking) {
@@ -279,16 +356,22 @@ export function EventDetailScreen({ navigation, route }: EventDetailScreenProps)
     }
 
     setIsCancellingBooking(true);
+    showBookingActionLoading('cancel');
     try {
       const { error } = await cancelBooking(myBooking.id);
       if (error) throw error;
       await refreshAfterBookingMutation();
+      showBookingActionResult('cancel', true);
     } catch (error) {
-      Alert.alert('Unable to cancel booking', getErrorMessage(error, 'Could not cancel your booking.'));
+      showBookingActionResult(
+        'cancel',
+        false,
+        getErrorMessage(error, BOOKING_ACTION_COPY.cancel.errorFallback),
+      );
     } finally {
       setIsCancellingBooking(false);
     }
-  }, [myBooking, refreshAfterBookingMutation]);
+  }, [myBooking, refreshAfterBookingMutation, showBookingActionLoading, showBookingActionResult]);
 
   const confirmCancelBooking = useCallback(() => {
     Alert.alert(
@@ -477,6 +560,55 @@ export function EventDetailScreen({ navigation, route }: EventDetailScreenProps)
             showsHorizontalScrollIndicator={false}
           />
           <Text style={styles.viewerHint}>Pinch to zoom. Swipe left or right for more photos.</Text>
+        </View>
+      </Modal>
+      <Modal
+        animationType="fade"
+        onRequestClose={() => {
+          if (bookingActionModal?.phase === 'result') {
+            setBookingActionModal(null);
+          }
+        }}
+        transparent
+        visible={Boolean(bookingActionModal)}
+      >
+        <View style={styles.bookingModalBackdrop}>
+          <View style={styles.bookingModalCard}>
+            {bookingActionModal?.phase === 'loading' ? (
+              <>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={styles.bookingModalTitle}>{BOOKING_ACTION_COPY[bookingActionModal.action].loadingTitle}</Text>
+                <Text style={styles.bookingModalMessage}>{BOOKING_ACTION_COPY[bookingActionModal.action].loadingMessage}</Text>
+              </>
+            ) : bookingActionModal?.phase === 'result' ? (
+              <>
+                <View
+                  style={[
+                    styles.bookingModalIconWrap,
+                    bookingActionModal.success ? styles.bookingModalIconSuccess : styles.bookingModalIconError,
+                  ]}
+                >
+                  <Ionicons
+                    name={bookingActionModal.success ? 'checkmark' : 'close'}
+                    size={22}
+                    color={bookingActionModal.success ? '#16A34A' : '#DC2626'}
+                  />
+                </View>
+                <Text style={styles.bookingModalTitle}>
+                  {bookingActionModal.success
+                    ? BOOKING_ACTION_COPY[bookingActionModal.action].successTitle
+                    : BOOKING_ACTION_COPY[bookingActionModal.action].errorTitle}
+                </Text>
+                <Text style={styles.bookingModalMessage}>{bookingActionModal.message}</Text>
+                <Pressable
+                  style={({ pressed }) => [styles.bookingModalOkBtn, pressed && { opacity: 0.88 }]}
+                  onPress={() => setBookingActionModal(null)}
+                >
+                  <Text style={styles.bookingModalOkBtnText}>OK</Text>
+                </Pressable>
+              </>
+            ) : null}
+          </View>
         </View>
       </Modal>
 
@@ -913,6 +1045,64 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     fontSize: 12,
     color: '#CBD5E1',
+  },
+  bookingModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(2, 6, 23, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  bookingModalCard: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 22,
+    alignItems: 'center',
+    gap: 10,
+  },
+  bookingModalIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bookingModalIconSuccess: {
+    backgroundColor: 'rgba(22, 163, 74, 0.12)',
+  },
+  bookingModalIconError: {
+    backgroundColor: 'rgba(220, 38, 38, 0.12)',
+  },
+  bookingModalTitle: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 18,
+    color: '#111827',
+    textAlign: 'center',
+  },
+  bookingModalMessage: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    lineHeight: 22,
+    color: '#4B5563',
+    textAlign: 'center',
+  },
+  bookingModalOkBtn: {
+    marginTop: 6,
+    minWidth: 110,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bookingModalOkBtnText: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 14,
+    color: '#FFFFFF',
   },
 
   heroWrap: { height: 340, position: 'relative' },
