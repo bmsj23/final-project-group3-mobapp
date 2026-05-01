@@ -224,6 +224,8 @@ export function EventDetailScreen({ navigation, route }: EventDetailScreenProps)
   const statusStyle = STATUS_COLORS[event?.status ?? 'upcoming'] ?? STATUS_COLORS.upcoming;
   const isAuthenticated = Boolean(profile?.id);
   const eventGallery = event?.imageUrls?.length ? event.imageUrls : (event?.coverImageUrl ? [event.coverImageUrl] : []);
+  const heroPreviewPhotos = eventGallery.slice(1, 4);
+  const hiddenHeroPreviewCount = Math.max(eventGallery.length - 4, 0);
 
   const openViewer = useCallback((index: number) => {
     setViewerIndex(index);
@@ -642,9 +644,10 @@ export function EventDetailScreen({ navigation, route }: EventDetailScreenProps)
           )}
           <LinearGradient
             colors={['rgba(0,0,0,0.35)', 'transparent', 'rgba(0,0,0,0.15)']}
+            pointerEvents="none"
             style={StyleSheet.absoluteFill}
           />
-          <View style={styles.overlayTop}>
+          <View pointerEvents="box-none" style={styles.overlayTop}>
             <Pressable
               accessibilityRole="button"
               style={({ pressed }) => [styles.overlayBtn, pressed && styles.overlayBtnPressed]}
@@ -664,6 +667,32 @@ export function EventDetailScreen({ navigation, route }: EventDetailScreenProps)
               />
             </Pressable>
           </View>
+          {heroPreviewPhotos.length > 0 ? (
+            <View pointerEvents="box-none" style={styles.heroPreviewStrip}>
+              {heroPreviewPhotos.map((imageUrl, index) => (
+                <Pressable
+                  key={`${event.id}-hero-preview-${index + 1}`}
+                  onPress={() => openViewer(index + 1)}
+                  style={styles.heroPreviewCard}
+                >
+                  <Image
+                    contentFit="cover"
+                    source={{ uri: imageUrl }}
+                    style={styles.heroPreviewImage}
+                    transition={120}
+                  />
+                </Pressable>
+              ))}
+              {hiddenHeroPreviewCount > 0 ? (
+                <Pressable
+                  onPress={() => openViewer(4)}
+                  style={[styles.heroPreviewCard, styles.heroPreviewMoreCard]}
+                >
+                  <Text style={styles.heroPreviewMoreText}>+{hiddenHeroPreviewCount}</Text>
+                </Pressable>
+              ) : null}
+            </View>
+          ) : null}
         </View>
 
         {/* ── Sheet ── */}
@@ -677,28 +706,6 @@ export function EventDetailScreen({ navigation, route }: EventDetailScreenProps)
           ]}
         >
           <View style={styles.grabber} />
-
-          {eventGallery.length > 1 ? (
-            <View style={styles.gallerySection}>
-              <Text style={styles.sectionTitle}>Event Photos</Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.galleryRow}
-              >
-                {eventGallery.map((imageUrl, index) => (
-                  <Pressable key={`${event.id}-image-${index}`} onPress={() => openViewer(index)} style={styles.galleryCard}>
-                    <Image
-                      contentFit="cover"
-                      source={{ uri: imageUrl }}
-                      style={styles.galleryImage}
-                      transition={150}
-                    />
-                  </Pressable>
-                ))}
-              </ScrollView>
-            </View>
-          ) : null}
 
           {/* Status + category + title */}
           <View style={styles.titleBlock}>
@@ -1114,6 +1121,34 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between',
     paddingHorizontal: layout.screenPaddingH,
   },
+  heroPreviewStrip: {
+    position: 'absolute',
+    left: layout.screenPaddingH,
+    bottom: 36,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  heroPreviewCard: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.92)',
+    backgroundColor: 'rgba(15,23,42,0.45)',
+  },
+  heroPreviewImage: { width: '100%', height: '100%' },
+  heroPreviewMoreCard: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(2, 6, 23, 0.65)',
+  },
+  heroPreviewMoreText: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 12,
+    color: '#FFFFFF',
+  },
   overlayBtn: {
     width: 44, height: 44, borderRadius: 22,
     backgroundColor: 'rgba(0,0,0,0.38)',
@@ -1131,18 +1166,6 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     gap: 20,
   },
-  gallerySection: { gap: 10 },
-  galleryRow: { gap: 12, paddingRight: 4 },
-  galleryCard: {
-    width: 220,
-    height: 140,
-    borderRadius: 18,
-    overflow: 'hidden',
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  galleryImage: { width: '100%', height: '100%' },
   grabber: {
     width: 36, height: 4, borderRadius: 2,
     backgroundColor: '#E5E7EB', alignSelf: 'center', marginBottom: 2,
