@@ -146,6 +146,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
               avatarUri={profile?.avatar_url ?? null}
               eyebrow={profile?.full_name ? 'Hi Welcome' : 'Explore Events'}
               extraBottomInset={24}
+              onPressAvatar={() => navigation.navigate('Profile')}
               title={profile?.full_name ?? 'Eventure'}
               bottomSlot={
                 <View style={styles.searchBar}>

@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   keyboardBackground: {
     backgroundColor: colors.background,
     bottom: 0,
-    height: 300,
+    height: 400,
     left: 0,
     position: 'absolute',
     right: 0,

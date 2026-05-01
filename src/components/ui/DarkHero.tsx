@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,6 +16,7 @@ type DarkHeroProps = {
   subtitle?: string;
   avatarUri?: string | null;
   avatarInitials?: string;
+  onPressAvatar?: () => void;
   rightSlot?: ReactNode;
   bottomSlot?: ReactNode;
   extraBottomInset?: number;
@@ -29,6 +30,7 @@ export function DarkHero({
   subtitle,
   avatarUri,
   avatarInitials,
+  onPressAvatar,
   rightSlot,
   bottomSlot,
   extraBottomInset = 0,
@@ -52,7 +54,11 @@ export function DarkHero({
     >
       <View style={styles.topRow}>
         {showAvatar ? (
-          <View style={styles.avatarWrapper}>
+          <Pressable
+            accessibilityLabel="Go to profile"
+            onPress={onPressAvatar}
+            style={styles.avatarWrapper}
+          >
             {avatarUri ? (
               <Image
                 contentFit="cover"
@@ -68,7 +74,7 @@ export function DarkHero({
               </View>
             )}
             <View style={styles.onlineDot} />
-          </View>
+          </Pressable>
         ) : null}
         <View style={styles.copy}>
           {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}

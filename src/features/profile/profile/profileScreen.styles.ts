@@ -46,6 +46,7 @@ export const styles = StyleSheet.create({
     height: 118,
     borderRadius: 59,
     padding: 4,
+    marginTop:24,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#60A5FA',

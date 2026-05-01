@@ -45,11 +45,11 @@ export function ProfileHero({
         },
       ]}
     >
-      <View style={styles.heroHeader}>
+      {/*<View style={styles.heroHeader}>
         <Text style={styles.heroEyebrow}>
           {isGuest ? 'Guest Mode' : profile?.role === 'admin' ? 'Admin' : ''}
         </Text>
-      </View>
+      </View>*/}
 
       <Animated.View
         style={[
