@@ -474,6 +474,7 @@ const styles = StyleSheet.create({
   guestContainer: {
     flex: 1, alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: layout.screenPaddingH, gap: 16,
+    backgroundColor: colors.bgDark,
   },
   guestIconWrap: {
     width: 80, height: 80, borderRadius: 24,
@@ -481,14 +482,21 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#CDE0FB',
     alignItems: 'center', justifyContent: 'center',
   },
-  guestTitle: { fontFamily: 'Inter_700Bold', fontSize: 26, color: '#0F172A', letterSpacing: -0.5 },
-  guestSub: { fontFamily: 'Inter_400Regular', fontSize: 14, color: '#475569', textAlign: 'center', lineHeight: 22 },
-  guestBtn: { borderRadius: radius.md, overflow: 'hidden', width: '100%', marginTop: 8 },
+  guestTitle: { fontFamily: 'Inter_700Bold', fontSize: 26, color: '#fff', letterSpacing: -0.5 },
+  guestSub: { fontFamily: 'Inter_400Regular',
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#CBD5E1',
+    textAlign: 'center',},
+  guestBtn: { borderRadius: radius.full, overflow: 'hidden' },
   guestBtnSurface: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    minHeight: 54, gap: spacing.xs,
+    alignItems: 'center',
     backgroundColor: colors.primaryDark,
+    flexDirection: 'row',
+    gap: spacing.xs,
+    justifyContent: 'center',
+    minHeight: 46,
+    paddingHorizontal: spacing.lg,
   },
-  guestBtnText: { fontFamily: 'Inter_700Bold', fontSize: 16, color: '#fff' },
-
+  guestBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 15, color: '#fff' },
 });

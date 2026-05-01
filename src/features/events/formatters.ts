@@ -62,6 +62,11 @@ export function tagsFromInput(value: string) {
     .filter(Boolean);
 }
 
+export function capitalizeLocation(value: string) {
+  if (!value) return '';
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
 export function filterEventsByQuery(
   events: EventSummary[],
   query: string,

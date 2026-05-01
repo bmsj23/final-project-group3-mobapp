@@ -41,7 +41,7 @@ import {
   registerForEvent,
   updateBookingTickets,
 } from '../../bookings/api';
-import { formatEventDateTime, formatEventStatus } from '../formatters';
+import { formatEventDateTime, formatEventStatus, capitalizeLocation } from '../formatters';
 import type { EventDetail } from '../types';
 import type { BookingSummary } from '../../bookings/types';
 
@@ -258,7 +258,7 @@ export function EventDetailScreen({ navigation, route }: EventDetailScreenProps)
 
   const detailRows = useMemo(() =>
     event ? [
-      { icon: 'location-outline'  as const, label: 'Location',    value: event.location                                  },
+      { icon: 'location-outline'  as const, label: 'Location',    value: capitalizeLocation(event.location)              },
       { icon: 'calendar-outline'  as const, label: 'Date & Time', value: formatEventDateTime(event.startsAt)             },
       { icon: 'time-outline'      as const, label: 'Register By', value: formatEventDateTime(event.registrationDeadline) },
     ] : [], [event]);

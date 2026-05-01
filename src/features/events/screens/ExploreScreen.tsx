@@ -129,55 +129,57 @@ export function ExploreScreen({ navigation }: ExploreScreenProps) {
             />
 
             <View style={styles.body}>
-              <ScrollView
-                alwaysBounceHorizontal={false}
-                bounces={false}
-                horizontal
-                overScrollMode="never"
-                showsHorizontalScrollIndicator={false}
-                style={styles.fullBleedScroll}
-              >
-                <View style={styles.categoryRow}>
-                  <CategoryPill
-                    label="All"
-                    onPress={() => setSelectedCategoryId(null)}
-                    selected={selectedCategoryId === null}
-                  />
-                  {categories.map((category) => (
+              <View style={styles.inner}>
+                <ScrollView
+                  alwaysBounceHorizontal={false}
+                  bounces={false}
+                  horizontal
+                  overScrollMode="never"
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.fullBleedScroll}
+                >
+                  <View style={styles.categoryRow}>
                     <CategoryPill
-                      key={category.id}
-                      label={category.name}
-                      onPress={() => setSelectedCategoryId(category.id)}
-                      selected={selectedCategoryId === category.id}
+                      label="All"
+                      onPress={() => setSelectedCategoryId(null)}
+                      selected={selectedCategoryId === null}
                     />
-                  ))}
-                </View>
-              </ScrollView>
+                    {categories.map((category) => (
+                      <CategoryPill
+                        key={category.id}
+                        label={category.name}
+                        onPress={() => setSelectedCategoryId(category.id)}
+                        selected={selectedCategoryId === category.id}
+                      />
+                    ))}
+                  </View>
+                </ScrollView>
 
-              {filteredEvents.length > 0 && !isLoading && !errorMessage ? (
-                <View style={styles.list}>
-                  {filteredEvents.map((event) => (
-                    <EventListCard
-                      key={event.id}
-                      categoryName={categoryNameById.get(event.categoryId)}
-                      event={event}
-                      isFavorited={isFavorited(event.id)}
-                      onPress={() => navigation.navigate('EventDetail', { eventId: event.id })}
-                      onToggleFavorite={() => void handleToggleFavorite(event.id)}
-                    />
-                  ))}
-                </View>
-              ) : (
-                <View style={styles.stateWrap}>
-                  {errorMessage ? (
-                    <EmptyStateCard body={errorMessage} icon="cloud-offline-outline" title="Unable to load explore data" />
-                  ) : isLoading ? (
-                    <EmptyStateCard body="Loading events and categories for you." icon="hourglass-outline" title="Loading explore" />
-                  ) : (
-                    <EmptyStateCard body="Try a different search or clear the current category filter." icon="search-outline" title="No matching events" />
-                  )}
-                </View>
-              )}
+                {filteredEvents.length > 0 && !isLoading && !errorMessage ? (
+                  <View style={styles.list}>
+                    {filteredEvents.map((event) => (
+                      <EventListCard
+                        key={event.id}
+                        categoryName={categoryNameById.get(event.categoryId)}
+                        event={event}
+                        isFavorited={isFavorited(event.id)}
+                        onPress={() => navigation.navigate('EventDetail', { eventId: event.id })}
+                        onToggleFavorite={() => void handleToggleFavorite(event.id)}
+                      />
+                    ))}
+                  </View>
+                ) : (
+                  <View style={styles.stateWrap}>
+                    {errorMessage ? (
+                      <EmptyStateCard body={errorMessage} icon="cloud-offline-outline" title="Unable to load explore data" />
+                    ) : isLoading ? (
+                      <EmptyStateCard body="Loading events and categories for you." icon="hourglass-outline" title="Loading explore" />
+                    ) : (
+                      <EmptyStateCard body="Try a different search or clear the current category filter." icon="search-outline" title="No matching events" />
+                    )}
+                  </View>
+                )}
+              </View>
             </View>
           </ScrollView>
         </View>
@@ -220,12 +222,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
-    flex: 1,
-    gap: spacing.lg,
+    flexGrow: 1,
     marginTop: -12,
     paddingBottom: spacing.xxl,
     paddingHorizontal: layout.screenPaddingH,
     paddingTop: spacing.xl,
+  },
+  inner: {
+    gap: spacing.lg,
   },
   fullBleedScroll: {
     flex: 0,
@@ -240,8 +244,6 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   stateWrap: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
+    alignSelf: 'stretch',
   },
 });

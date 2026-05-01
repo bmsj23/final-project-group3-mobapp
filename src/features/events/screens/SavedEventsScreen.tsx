@@ -23,7 +23,7 @@ import { layout } from '../../../theme/layout';
 import { radius } from '../../../theme/radius';
 import { spacing } from '../../../theme/spacing';
 import { fetchEventsByIds, fetchMyFavoritedEvents } from '../api';
-import { formatEventDateTime, formatEventStatus } from '../formatters';
+import { formatEventDateTime, formatEventStatus, capitalizeLocation } from '../formatters';
 import type { EventSummary } from '../types';
 import { useEventFavorites } from '../FavoritesProvider';
 
@@ -96,7 +96,7 @@ function SavedEventCard({
         </View>
         <View style={styles.cardMetaRow}>
           <Ionicons color="#94A3B8" name="location-outline" size={13} />
-          <Text numberOfLines={1} style={styles.cardMetaText}>{event.location}</Text>
+          <Text numberOfLines={1} style={styles.cardMetaText}>{capitalizeLocation(event.location)}</Text>
         </View>
       </View>
     </Pressable>
@@ -322,6 +322,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: layout.screenPaddingH,
     gap: spacing.md,
+    backgroundColor: colors.bgDark,
   },
   guestIconWrap: {
     alignItems: 'center',

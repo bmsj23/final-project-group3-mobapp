@@ -269,8 +269,6 @@ export function EditEventScreen({ navigation, route }: EditEventScreenProps) {
     <SafeAreaView style={styles.root} edges={[]}>
       <StatusBar style="light" />
       <LinearGradient colors={['#060D1F', '#1A1005', '#060D1F']} style={StyleSheet.absoluteFill} />
-      <View style={styles.orbAmber}  pointerEvents="none" />
-      <View style={styles.orbBlue}   pointerEvents="none" />
 
       <ScrollView
         ref={scrollRef}
@@ -335,17 +333,6 @@ const styles = StyleSheet.create({
   root:       { flex: 1, backgroundColor: '#060D1F' },
   scroll:     { flexGrow: 1, paddingBottom: 0 },
   scrollView: { flex: 1 },
-
-  orbAmber: {
-    position: 'absolute', top: -60, left: -60,
-    width: 240, height: 240, borderRadius: 120,
-    backgroundColor: '#F59E0B', opacity: 0.07,
-  },
-  orbBlue: {
-    position: 'absolute', top: 160, right: -60,
-    width: 200, height: 200, borderRadius: 100,
-    backgroundColor: '#2563EB', opacity: 0.07,
-  },
 
   centerState: {
     flex: 1, alignItems: 'center', justifyContent: 'center',

@@ -945,7 +945,7 @@ export function EventForm({
             <NavRow
               onBack={() => {}}
               onNext={goToStep1}
-              nextLabel="Next: Schedule"
+              nextLabel="Schedule"
               backDisabled
             />
           </View>

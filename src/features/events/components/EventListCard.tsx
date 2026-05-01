@@ -7,7 +7,7 @@ import { radius } from '../../../theme/radius';
 import { shadows } from '../../../theme/shadows';
 import { spacing } from '../../../theme/spacing';
 import { typography } from '../../../theme/typography';
-import { formatEventDateTime } from '../formatters';
+import { formatEventDateTime, capitalizeLocation } from '../formatters';
 import type { EventSummary } from '../types';
 
 type EventListCardProps = {
@@ -117,7 +117,7 @@ export function EventListCard({
               </View>
               <View style={styles.metaRow}>
                 <Ionicons color={colors.textMuted} name="location-outline" size={12} />
-                <Text numberOfLines={1} style={styles.meta}>{event.location}</Text>
+                <Text numberOfLines={1} style={styles.meta}>{capitalizeLocation(event.location)}</Text>
               </View>
             </View>
             <View style={styles.featuredFooter}>
@@ -146,7 +146,7 @@ export function EventListCard({
             </View>
             <View style={styles.metaRow}>
               <Ionicons color={colors.textMuted} name="location-outline" size={12} />
-              <Text numberOfLines={1} style={styles.meta}>{event.location}</Text>
+              <Text numberOfLines={1} style={styles.meta}>{capitalizeLocation(event.location)}</Text>
             </View>
           </View>
           <View style={styles.trailingColumn}>
