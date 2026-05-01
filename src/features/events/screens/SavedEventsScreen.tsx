@@ -214,7 +214,7 @@ export function SavedEventsScreen({ navigation }: SavedEventsScreenProps) {
 
   if (isGuest) {
     return (
-      <ScreenContainer bg={colors.bgDark} noPadding>
+      <ScreenContainer bg="#F4F8FC" noPadding>
         <StatusBar style="dark" />
 
         <View style={styles.guestContainer}>
@@ -231,7 +231,6 @@ export function SavedEventsScreen({ navigation }: SavedEventsScreenProps) {
           >
             <View style={styles.guestBtnSurface}>
               <Text style={styles.guestBtnText}>Sign In</Text>
-              <Ionicons color="#fff" name="arrow-forward" size={16} />
             </View>
           </Pressable>
         </View>
@@ -349,7 +348,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: layout.screenPaddingH,
     gap: spacing.md,
-    backgroundColor: colors.bgDark,
+    backgroundColor: '#F4F8FC',
   },
   guestIconWrap: {
     alignItems: 'center',
@@ -364,13 +363,13 @@ const styles = StyleSheet.create({
   guestTitle: {
     fontFamily: 'Inter_700Bold',
     fontSize: 28,
-    color: '#FFFFFF',
+    color: '#0F172A',
   },
   guestSub: {
     fontFamily: 'Inter_400Regular',
     fontSize: 15,
     lineHeight: 22,
-    color: '#CBD5E1',
+    color: '#475569',
     textAlign: 'center',
   },
   guestBtn: { borderRadius: radius.full, overflow: 'hidden' },

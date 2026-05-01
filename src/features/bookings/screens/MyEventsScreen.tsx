@@ -202,7 +202,7 @@ export function MyEventsScreen({ navigation }: MyEventsScreenProps) {
         if (!hasFetched.current) {
           hasFetched.current = true;
           void loadMyEvents();
-        } 
+        }
       }
     }, [isGuest, loadMyEvents, profile]),
   );
@@ -228,8 +228,8 @@ export function MyEventsScreen({ navigation }: MyEventsScreenProps) {
   // ── GUEST STATE ─────────────────────────────────────────────────────────────
   if (isGuest) {
     return (
-      <ScreenContainer bg={colors.bgDark} noPadding>
-        <StatusBar style="light" />
+      <ScreenContainer bg="#F4F8FC" noPadding>
+        <StatusBar style="dark" />
         <View style={styles.guestContainer}>
           <View style={styles.guestIconWrap}>
             <Ionicons name="calendar" size={40} color="#60A5FA" />
@@ -244,7 +244,6 @@ export function MyEventsScreen({ navigation }: MyEventsScreenProps) {
           >
             <View style={styles.guestBtnSurface}>
               <Text style={styles.guestBtnText}>Sign In</Text>
-              <Ionicons name="arrow-forward" size={16} color="#fff" />
             </View>
           </Pressable>
         </View>
@@ -338,7 +337,16 @@ export function MyEventsScreen({ navigation }: MyEventsScreenProps) {
                 </View>
               ) : (
                 <View style={styles.list}>
-                  {events.map((event, i) => (
+                  {[...events].sort((a, b) => {
+                    const priority: Record<string, number> = { ongoing: 0, upcoming: 1, completed: 2, cancelled: 3 };
+                    const pa = priority[a.status] ?? 2;
+                    const pb = priority[b.status] ?? 2;
+                    if (pa !== pb) return pa - pb;
+                    if (a.status === 'upcoming' || a.status === 'ongoing') {
+                      return Date.parse(a.startsAt) - Date.parse(b.startsAt);
+                    }
+                    return Date.parse(b.startsAt) - Date.parse(a.startsAt);
+                  }).map((event, i) => (
                     <EventCard
                       key={event.id}
                       event={event}
@@ -361,8 +369,8 @@ export function MyEventsScreen({ navigation }: MyEventsScreenProps) {
 
 const styles = StyleSheet.create({
   // Both dark — covers ScreenContainer's white SafeAreaView during mount
-  keyboardWrap: { flex: 1, backgroundColor: colors.bgDark },
-  screen: { backgroundColor: colors.bgDark, flex: 1 },
+  keyboardWrap: { flex: 1, backgroundColor: '#F4F8FC' },
+  screen: { backgroundColor: '#F4F8FC', flex: 1 },
 
   scroll: { backgroundColor: 'transparent', flex: 1 },
   content: { flexGrow: 1 },
@@ -474,7 +482,7 @@ const styles = StyleSheet.create({
   guestContainer: {
     flex: 1, alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: layout.screenPaddingH, gap: 16,
-    backgroundColor: colors.bgDark,
+    backgroundColor: '#F4F8FC',
   },
   guestIconWrap: {
     width: 80, height: 80, borderRadius: 24,
@@ -482,11 +490,11 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#CDE0FB',
     alignItems: 'center', justifyContent: 'center',
   },
-  guestTitle: { fontFamily: 'Inter_700Bold', fontSize: 26, color: '#fff', letterSpacing: -0.5 },
+  guestTitle: { fontFamily: 'Inter_700Bold', fontSize: 26, color: '#0F172A', letterSpacing: -0.5 },
   guestSub: { fontFamily: 'Inter_400Regular',
     fontSize: 15,
     lineHeight: 22,
-    color: '#CBD5E1',
+    color: '#475569',
     textAlign: 'center',},
   guestBtn: { borderRadius: radius.full, overflow: 'hidden' },
   guestBtnSurface: {

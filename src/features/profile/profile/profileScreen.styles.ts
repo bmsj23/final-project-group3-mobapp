@@ -163,8 +163,8 @@ export const styles = StyleSheet.create({
   bodyGuest: {
     paddingTop: 0,
     paddingBottom: 0,
-    flex: 1,
   },
+  guestSpacer: { flex: 1 },
   handle: {
     width: 40,
     height: 5,
@@ -316,9 +316,8 @@ export const styles = StyleSheet.create({
     marginTop: 4,
   },
   guestSection: {
-    flex: 1,
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
+    paddingTop: 32,
     paddingBottom: spacing.lg,
     gap: spacing.md,
     justifyContent: 'space-between',
@@ -327,19 +326,17 @@ export const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: radius.xl,
     paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xl,
-    paddingTop: spacing.md,
+    paddingVertical: spacing.lg,
     overflow: 'hidden',
-    gap: 12,
+    gap: 24,
     borderWidth: 0,
-    flex: 1,
-    justifyContent: 'center',
   },
   guestCardTitle: {
     fontFamily: 'Inter_700Bold',
     fontSize: 18,
     color: '#0F172A',
     letterSpacing: -0.3,
+    lineHeight: 48,
   },
   guestCardSub: {
     fontFamily: 'Inter_400Regular',
@@ -363,7 +360,7 @@ export const styles = StyleSheet.create({
   guestSignInBtn: {
     borderRadius: radius.md,
     overflow: 'hidden',
-    marginTop: 4,
+    marginTop: 24,
     borderWidth: 1,
     borderColor: 'rgba(6,13,31,0.14)',
   },

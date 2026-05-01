@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { isSupabaseConfigured } from '../../../lib/supabase/client';
+import { isSupabaseConfigured, supabase } from '../../../lib/supabase/client';
 import type { AuthStackParamList } from '../../../navigation/types';
 import { useAppSession } from '../../../providers/AppSessionProvider';
 import { colors } from '../../../theme/colors';
@@ -32,7 +32,7 @@ export function SignInScreen({ navigation }: SignInScreenProps) {
   const [errors, setErrors] = useState<AuthFormErrors<keyof SignInFormValues>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [isSendingReset, setIsSendingReset] = useState(false);
 
   const fadeIn = useRef(new Animated.Value(0)).current;
   const slideUp = useRef(new Animated.Value(40)).current;
@@ -104,17 +104,26 @@ export function SignInScreen({ navigation }: SignInScreenProps) {
     }
   }
 
-  function handleForgotPassword() {
-    Alert.alert('Reset Password', "We'll send a reset link to your email address.", [
+  async function handleForgotPassword() {
+    if (!isValidEmail(values.email)) {
+      Alert.alert('Enter your email', 'Type your email address in the field above, then tap Forgot Password.');
+      return;
+    }
+    Alert.alert('Reset Password', `Send a reset link to ${values.email}?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Send Link',
-        onPress: () => {
-          if (!isValidEmail(values.email)) {
-            Alert.alert('Heads up', 'Enter your email above first, then tap Forgot Password.');
-            return;
+        onPress: async () => {
+          setIsSendingReset(true);
+          try {
+            const { error } = await supabase!.auth.resetPasswordForEmail(values.email);
+            if (error) throw error;
+            Alert.alert('Link Sent', `Check your inbox — we've sent a reset link to ${values.email}.`);
+          } catch (err) {
+            Alert.alert('Could not send link', err instanceof Error ? err.message : 'Try again later.');
+          } finally {
+            setIsSendingReset(false);
           }
-          Alert.alert('Link Sent', `Check your inbox at ${values.email}`);
         },
       },
     ]);
@@ -152,7 +161,6 @@ export function SignInScreen({ navigation }: SignInScreenProps) {
                 <View style={styles.strokeWrap}>
                   <Text style={[styles.h2StrokeBase, styles.h2StrokeOutline]}>BACK</Text>
                 </View>
-                <Text style={styles.h2Solid}> IN</Text>
               </View>
               <Text style={styles.h3Accent}>Sign In</Text>
               <Text style={styles.heroSubcopy}>
@@ -261,22 +269,16 @@ export function SignInScreen({ navigation }: SignInScreenProps) {
                 </View>
               </Animated.View>
 
-              <View style={styles.inlineRow}>
-                <Pressable
-                  accessibilityRole="switch"
-                  accessibilityState={{ checked: rememberMe }}
-                  style={styles.rememberRow}
-                  onPress={() => setRememberMe((value) => !value)}
-                >
-                  <View style={[styles.toggle, rememberMe && styles.toggleOn]}>
-                    <View style={[styles.knob, rememberMe && styles.knobRight]} />
-                  </View>
-                  <Text style={styles.rememberText}>Remember me</Text>
-                </Pressable>
-                <Pressable onPress={handleForgotPassword} hitSlop={8}>
-                  <Text style={styles.forgotText}>Forgot Password?</Text>
-                </Pressable>
-              </View>
+              <Pressable
+                onPress={handleForgotPassword}
+                hitSlop={8}
+                disabled={isSendingReset}
+                style={styles.forgotBtn}
+              >
+                <Text style={styles.forgotText}>
+                  {isSendingReset ? 'Sending...' : 'Forgot Password?'}
+                </Text>
+              </Pressable>
 
               <Pressable
                 accessibilityRole="button"
@@ -301,7 +303,7 @@ export function SignInScreen({ navigation }: SignInScreenProps) {
                   ) : (
                     <>
                       <Text style={styles.btnLabel}>Let&apos;s Go</Text>
-                      
+
                     </>
                   )}
                 </View>
