@@ -1,4 +1,3 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { Text, View } from 'react-native';
 
 import type { NotificationSummary } from '../../notifications/types';
@@ -20,7 +19,6 @@ export function NotificationSummaryCard({ notifications, permissionState }: Noti
 
   return (
     <View style={styles.summaryCard}>
-      <LinearGradient colors={['rgba(59,130,246,0.16)', 'rgba(14,165,233,0.02)']} style={styles.summaryGlow} />
 
       <View style={styles.summaryTopRow}>
         <View style={[styles.summaryBadge, { backgroundColor: badgeColors[0] }]}>

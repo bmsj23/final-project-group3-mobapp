@@ -7,6 +7,7 @@ import {
   Alert,
   Animated,
   Keyboard,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -45,6 +46,7 @@ export function EditEventScreen({ navigation, route }: EditEventScreenProps) {
   const [isSubmitting, setIsSubmitting]       = useState(false);
   const [screenError, setScreenError]         = useState<string | null>(null);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const isDirtyRef = useRef(false);
 
   const scrollRef = useRef<ScrollView | null>(null);
@@ -148,7 +150,7 @@ export function EditEventScreen({ navigation, route }: EditEventScreenProps) {
         }
 
         isDirtyRef.current = false;
-        navigation.goBack();
+        setShowSuccessModal(true);
       } catch (err) {
         setSubmissionError(err instanceof Error ? err.message : 'Unable to update event.');
       } finally {
@@ -157,6 +159,11 @@ export function EditEventScreen({ navigation, route }: EditEventScreenProps) {
     },
     [event, navigation, profile],
   );
+
+  const handleSuccessModalOk = useCallback(() => {
+    setShowSuccessModal(false);
+    navigation.goBack();
+  }, [navigation]);
 
   // ── Guard: guest ───────────────────────────────────────────────────────
   if (!isAuthenticated || isGuest) {
@@ -325,6 +332,33 @@ export function EditEventScreen({ navigation, route }: EditEventScreenProps) {
             />
           </View>
       </ScrollView>
+
+      <Modal
+        animationType="fade"
+        onRequestClose={() => {
+          if (showSuccessModal) {
+            handleSuccessModalOk();
+          }
+        }}
+        transparent
+        visible={showSuccessModal}
+      >
+        <View style={styles.successModalBackdrop}>
+          <View style={styles.successModalCard}>
+            <View style={styles.successModalIconWrap}>
+              <Ionicons name="checkmark" size={22} color="#16A34A" />
+            </View>
+            <Text style={styles.successModalTitle}>Changes saved</Text>
+            <Text style={styles.successModalMessage}>Your event has been updated successfully.</Text>
+            <Pressable
+              style={({ pressed }) => [styles.successModalOkBtn, pressed && { opacity: 0.88 }]}
+              onPress={handleSuccessModalOk}
+            >
+              <Text style={styles.successModalOkBtnText}>OK</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -403,5 +437,59 @@ const styles = StyleSheet.create({
   formHandle: {
     width: 0, height: 0, borderRadius: 3,
     backgroundColor: '#E2E8F0', alignSelf: 'center', marginBottom: 0,
+  },
+
+  successModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(2, 6, 23, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  successModalCard: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 22,
+    alignItems: 'center',
+    gap: 10,
+  },
+  successModalIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(22, 163, 74, 0.12)',
+  },
+  successModalTitle: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 18,
+    color: '#111827',
+    textAlign: 'center',
+  },
+  successModalMessage: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    lineHeight: 22,
+    color: '#4B5563',
+    textAlign: 'center',
+  },
+  successModalOkBtn: {
+    marginTop: 6,
+    minWidth: 110,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  successModalOkBtnText: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 14,
+    color: '#FFFFFF',
   },
 });

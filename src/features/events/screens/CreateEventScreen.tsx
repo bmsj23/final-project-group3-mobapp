@@ -7,6 +7,7 @@ import {
   Alert,
   Animated,
   Keyboard,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -47,6 +48,8 @@ export function CreateEventScreen({ navigation }: CreateEventScreenProps) {
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [currentStep, setCurrentStep]         = useState(0);
   const [isDirty, setIsDirty]                 = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successEventId, setSuccessEventId]   = useState<string | null>(null);
   const isDirtyRef = useRef(false);
   const scrollRef = useRef<ScrollView | null>(null);
   const handleDescriptionFocus = useCallback(() => {
@@ -140,13 +143,8 @@ export function CreateEventScreen({ navigation }: CreateEventScreenProps) {
 
         shouldRollback = false;
         await notifyEventCreated(values.title.trim());
-        navigation.reset({
-          index: 1,
-          routes: [
-            { name: 'Tabs', params: { screen: 'MyEvents' } },
-            { name: 'EventDetail', params: { eventId: data.id } },
-          ],
-        });
+        setSuccessEventId(data.id);
+        setShowSuccessModal(true);
       } catch (err) {
         if (shouldRollback) {
           for (const image of uploadedImages) {
@@ -165,6 +163,18 @@ export function CreateEventScreen({ navigation }: CreateEventScreenProps) {
     },
     [navigation, profile],
   );
+
+  const handleSuccessModalOk = useCallback(() => {
+    if (!successEventId) return;
+    setShowSuccessModal(false);
+    navigation.reset({
+      index: 1,
+      routes: [
+        { name: 'Tabs', params: { screen: 'MyEvents' } },
+        { name: 'EventDetail', params: { eventId: successEventId } },
+      ],
+    });
+  }, [navigation, successEventId]);
 
   // ── Guest ──────────────────────────────────────────────────────────────
   if (!isAuthenticated || isGuest) {
@@ -282,6 +292,33 @@ export function CreateEventScreen({ navigation }: CreateEventScreenProps) {
             />
           </View>
       </ScrollView>
+
+      <Modal
+        animationType="fade"
+        onRequestClose={() => {
+          if (showSuccessModal) {
+            handleSuccessModalOk();
+          }
+        }}
+        transparent
+        visible={showSuccessModal}
+      >
+        <View style={styles.successModalBackdrop}>
+          <View style={styles.successModalCard}>
+            <View style={styles.successModalIconWrap}>
+              <Ionicons name="checkmark" size={22} color="#16A34A" />
+            </View>
+            <Text style={styles.successModalTitle}>Event published</Text>
+            <Text style={styles.successModalMessage}>Your event is now live and visible to all attendees.</Text>
+            <Pressable
+              style={({ pressed }) => [styles.successModalOkBtn, pressed && { opacity: 0.88 }]}
+              onPress={handleSuccessModalOk}
+            >
+              <Text style={styles.successModalOkBtnText}>OK</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -371,5 +408,59 @@ const styles = StyleSheet.create({
   formHandle: {
     width: 0, height: 0, borderRadius: 3,
     backgroundColor: '#E2E8F0', alignSelf: 'center', marginBottom: 0,
+  },
+
+  successModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(2, 6, 23, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  successModalCard: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 22,
+    alignItems: 'center',
+    gap: 10,
+  },
+  successModalIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(22, 163, 74, 0.12)',
+  },
+  successModalTitle: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 18,
+    color: '#111827',
+    textAlign: 'center',
+  },
+  successModalMessage: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    lineHeight: 22,
+    color: '#4B5563',
+    textAlign: 'center',
+  },
+  successModalOkBtn: {
+    marginTop: 6,
+    minWidth: 110,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  successModalOkBtnText: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 14,
+    color: '#FFFFFF',
   },
 });

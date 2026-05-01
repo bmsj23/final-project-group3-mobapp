@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   RefreshControl,
@@ -15,7 +16,6 @@ import {
   View,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-
 import { DarkHero } from '../../../components/ui/DarkHero';
 import { EmptyStateCard } from '../../../components/ui/EmptyStateCard';
 import { ScreenContainer } from '../../../components/ui/ScreenContainer';
@@ -45,6 +45,8 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
   const [query, setQuery] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [savedModalVisible, setSavedModalVisible] = useState(false);
+  const [removedModalVisible, setRemovedModalVisible] = useState(false);
   const hasFetched = useRef(false);
   const scrollRef = useRef<ScrollView>(null);
   const bodyY = useRef(0);
@@ -68,14 +70,11 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
     } else {
       setIsLoading(true);
     }
-
     try {
       const [{ data: nextEvents, error: eventsError }, { data: nextCategories, error: categoriesError }] =
         await Promise.all([fetchUpcomingEvents(), fetchCategories()]);
-
       if (eventsError) throw eventsError;
       if (categoriesError) throw categoriesError;
-
       setEvents(nextEvents);
       setCategories(nextCategories);
       setErrorMessage(null);
@@ -101,11 +100,17 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
 
   const handleToggleFavorite = useCallback(async (eventId: string) => {
     try {
+      const wasAlreadySaved = isFavorited(eventId);
       await toggleFavorite(eventId);
+      if (!wasAlreadySaved) {
+        setSavedModalVisible(true);
+      } else {
+        setRemovedModalVisible(true);
+      }
     } catch (error) {
       Alert.alert('Unable to save event', error instanceof Error ? error.message : 'Please try again.');
     }
-  }, [toggleFavorite]);
+  }, [isFavorited, toggleFavorite]);
 
   const categoryNameById = useMemo(
     () => new Map(categories.map((c) => [c.id, c.name])),
@@ -125,6 +130,51 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
       <StatusBar style="light" />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'height' : undefined} style={styles.keyboardWrap}>
         <View style={styles.screen}>
+          <Modal
+            animationType="fade"
+            onRequestClose={() => setSavedModalVisible(false)}
+            transparent
+            visible={savedModalVisible}
+          >
+            <View style={styles.modalBackdrop}>
+              <View style={styles.modalCard}>
+                <View style={styles.modalIconWrap}>
+                  <Ionicons name="heart" size={22} color="#16A34A" />
+                </View>
+                <Text style={styles.modalTitle}>Event saved!</Text>
+                <Text style={styles.modalMessage}>This event has been added to your saved list.</Text>
+                <Pressable
+                  style={({ pressed }) => [styles.modalOkBtn, pressed && { opacity: 0.88 }]}
+                  onPress={() => setSavedModalVisible(false)}
+                >
+                  <Text style={styles.modalOkBtnText}>OK</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Modal>
+          <Modal
+            animationType="fade"
+            onRequestClose={() => setRemovedModalVisible(false)}
+            transparent
+            visible={removedModalVisible}
+          >
+            <View style={styles.modalBackdrop}>
+              <View style={styles.modalCard}>
+                <View style={[styles.modalIconWrap, styles.modalIconRemoved]}>
+                  <Ionicons name="heart-dislike" size={22} color="#DC2626" />
+                </View>
+                <Text style={styles.modalTitle}>Event removed</Text>
+                <Text style={styles.modalMessage}>This event has been removed from your saved list.</Text>
+                <Pressable
+                  style={({ pressed }) => [styles.modalOkBtn, pressed && { opacity: 0.88 }]}
+                  onPress={() => setRemovedModalVisible(false)}
+                >
+                  <Text style={styles.modalOkBtnText}>OK</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Modal>
+
           <ScrollView
             ref={scrollRef}
             bounces={false}
@@ -168,7 +218,6 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
                 </View>
               }
             />
-
             <View style={styles.body} onLayout={(e) => { bodyY.current = e.nativeEvent.layout.y; }}>
               {errorMessage ? (
                 <EmptyStateCard
@@ -219,7 +268,6 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
                     onPressAction={() => navigation.navigate('Explore')}
                     title="Featured Events"
                   />
-
                   <ScrollView
                     alwaysBounceHorizontal={false}
                     bounces={false}
@@ -242,7 +290,6 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
                       ))}
                     </View>
                   </ScrollView>
-
                   <View onLayout={(e) => { categoriesY.current = e.nativeEvent.layout.y; }}>
                     <SectionHeader
                       actionLabel="VIEW ALL"
@@ -250,7 +297,6 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
                       title="Browse Categories"
                     />
                   </View>
-
                   <ScrollView
                     alwaysBounceHorizontal={false}
                     bounces={false}
@@ -276,7 +322,6 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
                       ))}
                     </View>
                   </ScrollView>
-
                   {listEvents.length === 0 && selectedCategoryId !== null ? (
                     <EmptyStateCard
                       body="No events found in this category yet. Check back later."
@@ -355,7 +400,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: layout.screenPaddingH,
     paddingTop: spacing.xl,
   },
-  // Escape the body's horizontal padding so cards scroll edge-to-edge.
   fullBleedScroll: {
     marginHorizontal: -layout.screenPaddingH,
   },
@@ -374,5 +418,61 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: spacing.md,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(2, 6, 23, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 22,
+    alignItems: 'center',
+    gap: 10,
+  },
+  modalIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(22, 163, 74, 0.12)',
+  },
+  modalIconRemoved: {
+    backgroundColor: 'rgba(220, 38, 38, 0.12)',
+  },
+  modalTitle: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 18,
+    color: '#111827',
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    lineHeight: 22,
+    color: '#4B5563',
+    textAlign: 'center',
+  },
+  modalOkBtn: {
+    marginTop: 6,
+    minWidth: 110,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalOkBtnText: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 14,
+    color: '#FFFFFF',
   },
 });

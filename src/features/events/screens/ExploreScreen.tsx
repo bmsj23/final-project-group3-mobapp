@@ -2,7 +2,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import type { AppTabScreenProps } from '../../../navigation/types';
 import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
 import { DarkHero } from '../../../components/ui/DarkHero';
@@ -32,6 +32,8 @@ export function ExploreScreen({ navigation }: ExploreScreenProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [savedModalVisible, setSavedModalVisible] = useState(false);
+  const [removedModalVisible, setRemovedModalVisible] = useState(false);
   const hasFetched = useRef(false);
 
   const loadExplore = useCallback(async (isRefresh = false) => {
@@ -73,11 +75,17 @@ export function ExploreScreen({ navigation }: ExploreScreenProps) {
 
   const handleToggleFavorite = useCallback(async (eventId: string) => {
     try {
+      const wasAlreadySaved = isFavorited(eventId);
       await toggleFavorite(eventId);
+      if (!wasAlreadySaved) {
+        setSavedModalVisible(true);
+      } else {
+        setRemovedModalVisible(true);
+      }
     } catch (error) {
       Alert.alert('Unable to save event', error instanceof Error ? error.message : 'Please try again.');
     }
-  }, [toggleFavorite]);
+  }, [isFavorited, toggleFavorite]);
 
   const categoryNameById = useMemo(
     () => new Map(categories.map((category) => [category.id, category.name])),
@@ -93,6 +101,51 @@ export function ExploreScreen({ navigation }: ExploreScreenProps) {
       <StatusBar style="light" />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'height' : undefined} style={styles.keyboardWrap}>
         <View style={styles.screen}>
+          <Modal
+            animationType="fade"
+            onRequestClose={() => setSavedModalVisible(false)}
+            transparent
+            visible={savedModalVisible}
+          >
+            <View style={styles.modalBackdrop}>
+              <View style={styles.modalCard}>
+                <View style={styles.modalIconWrap}>
+                  <Ionicons name="heart" size={22} color="#16A34A" />
+                </View>
+                <Text style={styles.modalTitle}>Event saved!</Text>
+                <Text style={styles.modalMessage}>This event has been added to your saved list.</Text>
+                <Pressable
+                  style={({ pressed }) => [styles.modalOkBtn, pressed && { opacity: 0.88 }]}
+                  onPress={() => setSavedModalVisible(false)}
+                >
+                  <Text style={styles.modalOkBtnText}>OK</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Modal>
+          <Modal
+            animationType="fade"
+            onRequestClose={() => setRemovedModalVisible(false)}
+            transparent
+            visible={removedModalVisible}
+          >
+            <View style={styles.modalBackdrop}>
+              <View style={styles.modalCard}>
+                <View style={[styles.modalIconWrap, styles.modalIconRemoved]}>
+                  <Ionicons name="heart-dislike" size={22} color="#DC2626" />
+                </View>
+                <Text style={styles.modalTitle}>Event removed</Text>
+                <Text style={styles.modalMessage}>This event has been removed from your saved list.</Text>
+                <Pressable
+                  style={({ pressed }) => [styles.modalOkBtn, pressed && { opacity: 0.88 }]}
+                  onPress={() => setRemovedModalVisible(false)}
+                >
+                  <Text style={styles.modalOkBtnText}>OK</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Modal>
+
           <ScrollView
             bounces={false}
             contentContainerStyle={styles.content}
@@ -245,5 +298,61 @@ const styles = StyleSheet.create({
   },
   stateWrap: {
     alignSelf: 'stretch',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(2, 6, 23, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 22,
+    alignItems: 'center',
+    gap: 10,
+  },
+  modalIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(22, 163, 74, 0.12)',
+  },
+  modalIconRemoved: {
+    backgroundColor: 'rgba(220, 38, 38, 0.12)',
+  },
+  modalTitle: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 18,
+    color: '#111827',
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    lineHeight: 22,
+    color: '#4B5563',
+    textAlign: 'center',
+  },
+  modalOkBtn: {
+    marginTop: 6,
+    minWidth: 110,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalOkBtnText: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 14,
+    color: '#FFFFFF',
   },
 });

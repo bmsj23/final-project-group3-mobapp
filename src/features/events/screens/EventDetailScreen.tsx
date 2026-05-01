@@ -52,10 +52,10 @@ type BookingActionModalState =
   | { phase: 'result'; action: BookingActionKey; success: boolean; message: string };
 
 const STATUS_COLORS: Record<string, { text: string; bg: string }> = {
-  upcoming:  { text: '#3B82F6', bg: 'rgba(59,130,246,0.1)'  },
-  ongoing:   { text: '#10B981', bg: 'rgba(16,185,129,0.1)'  },
+  upcoming: { text: '#3B82F6', bg: 'rgba(59,130,246,0.1)' },
+  ongoing: { text: '#10B981', bg: 'rgba(16,185,129,0.1)' },
   completed: { text: '#94A3B8', bg: 'rgba(148,163,184,0.1)' },
-  cancelled: { text: '#EF4444', bg: 'rgba(239,68,68,0.1)'   },
+  cancelled: { text: '#EF4444', bg: 'rgba(239,68,68,0.1)' },
 };
 
 const BOOKING_ACTION_COPY: Record<BookingActionKey, {
@@ -145,7 +145,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 export function EventDetailScreen({ navigation, route }: EventDetailScreenProps) {
   const { profile, signOut } = useAppSession();
   const { isFavorited, toggleFavorite } = useEventFavorites();
-  const [event, setEvent]         = useState<EventDetail | null>(null);
+  const [event, setEvent] = useState<EventDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
@@ -160,6 +160,8 @@ export function EventDetailScreen({ navigation, route }: EventDetailScreenProps)
   const [viewerVisible, setViewerVisible] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
   const [bookingActionModal, setBookingActionModal] = useState<BookingActionModalState | null>(null);
+  const [savedModalVisible, setSavedModalVisible] = useState(false);
+  const [removedModalVisible, setRemovedModalVisible] = useState(false);
 
   const sheetAnim = useRef(new Animated.Value(0)).current;
   const viewerListRef = useRef<FlatList<string> | null>(null);
@@ -258,22 +260,27 @@ export function EventDetailScreen({ navigation, route }: EventDetailScreenProps)
 
   const detailRows = useMemo(() =>
     event ? [
-      { icon: 'location-outline'  as const, label: 'Location',    value: capitalizeLocation(event.location)              },
-      { icon: 'calendar-outline'  as const, label: 'Date & Time', value: formatEventDateTime(event.startsAt)             },
-      { icon: 'time-outline'      as const, label: 'Register By', value: formatEventDateTime(event.registrationDeadline) },
+      { icon: 'location-outline' as const, label: 'Location', value: capitalizeLocation(event.location) },
+      { icon: 'calendar-outline' as const, label: 'Date & Time', value: formatEventDateTime(event.startsAt) },
+      { icon: 'time-outline' as const, label: 'Register By', value: formatEventDateTime(event.registrationDeadline) },
     ] : [], [event]);
 
   const handleToggleSaved = useCallback(async () => {
     if (!event) {
       return;
     }
-
     try {
+      const wasAlreadySaved = isFavorited(event.id);
       await toggleFavorite(event.id);
+      if (!wasAlreadySaved) {
+        setSavedModalVisible(true);
+      } else {
+        setRemovedModalVisible(true);
+      }
     } catch (error) {
       Alert.alert('Unable to save event', error instanceof Error ? error.message : 'Please try again.');
     }
-  }, [event, toggleFavorite]);
+  }, [event, isFavorited, toggleFavorite]);
 
   const refreshAfterBookingMutation = useCallback(async () => {
     await Promise.all([loadEvent(false), loadBooking()]);
@@ -613,6 +620,50 @@ export function EventDetailScreen({ navigation, route }: EventDetailScreenProps)
           </View>
         </View>
       </Modal>
+      <Modal
+        animationType="fade"
+        onRequestClose={() => setSavedModalVisible(false)}
+        transparent
+        visible={savedModalVisible}
+      >
+        <View style={styles.bookingModalBackdrop}>
+          <View style={styles.bookingModalCard}>
+            <View style={[styles.bookingModalIconWrap, styles.bookingModalIconSuccess]}>
+              <Ionicons name="heart" size={22} color="#16A34A" />
+            </View>
+            <Text style={styles.bookingModalTitle}>Event saved!</Text>
+            <Text style={styles.bookingModalMessage}>This event has been added to your saved list.</Text>
+            <Pressable
+              style={({ pressed }) => [styles.bookingModalOkBtn, pressed && { opacity: 0.88 }]}
+              onPress={() => setSavedModalVisible(false)}
+            >
+              <Text style={styles.bookingModalOkBtnText}>OK</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        animationType="fade"
+        onRequestClose={() => setRemovedModalVisible(false)}
+        transparent
+        visible={removedModalVisible}
+      >
+        <View style={styles.bookingModalBackdrop}>
+          <View style={styles.bookingModalCard}>
+            <View style={[styles.bookingModalIconWrap, styles.bookingModalIconError]}>
+              <Ionicons name="heart-dislike" size={22} color="#DC2626" />
+            </View>
+            <Text style={styles.bookingModalTitle}>Event removed</Text>
+            <Text style={styles.bookingModalMessage}>This event has been removed from your saved list.</Text>
+            <Pressable
+              style={({ pressed }) => [styles.bookingModalOkBtn, pressed && { opacity: 0.88 }]}
+              onPress={() => setRemovedModalVisible(false)}
+            >
+              <Text style={styles.bookingModalOkBtnText}>OK</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
 
       <ScrollView
         bounces={false}
@@ -660,8 +711,8 @@ export function EventDetailScreen({ navigation, route }: EventDetailScreenProps)
               style={({ pressed }) => [styles.overlayBtn, pressed && styles.overlayBtnPressed]}
               onPress={() => void handleToggleSaved()}
             >
-                <Ionicons
-                  name={isSaved ? 'heart' : 'heart-outline'}
+              <Ionicons
+                name={isSaved ? 'heart' : 'heart-outline'}
                 size={22}
                 color={isSaved ? '#FF3CAC' : '#fff'}
               />
@@ -961,9 +1012,9 @@ export function EventDetailScreen({ navigation, route }: EventDetailScreenProps)
                           ? 'Registering…'
                           : hasRegistrationEnded
                             ? 'Registration Ended'
-                          : event.remainingSlots <= 0
-                            ? 'Sold Out'
-                            : 'Register Now'}
+                            : event.remainingSlots <= 0
+                              ? 'Sold Out'
+                              : 'Register Now'}
                     </Text>
                   </Pressable>
                 )}

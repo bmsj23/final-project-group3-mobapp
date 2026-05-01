@@ -12,10 +12,12 @@ import {
   StyleSheet,
   Text,
   View,
+  Modal,
 } from 'react-native';
 
 import { useAppSession } from '../../../providers/AppSessionProvider';
 import { DarkHero } from '../../../components/ui/DarkHero';
+import { EmptyStateCard } from '../../../components/ui/EmptyStateCard';
 import { ScreenContainer } from '../../../components/ui/ScreenContainer';
 import { SectionHeader } from '../../../components/ui/SectionHeader';
 import { colors } from '../../../theme/colors';
@@ -110,6 +112,7 @@ export function SavedEventsScreen({ navigation }: SavedEventsScreenProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [removedModalVisible, setRemovedModalVisible] = useState(false);
   const hasFetchedRef = useRef(false);
 
   const mergeCachedEvents = useCallback((events: EventSummary[]) => {
@@ -198,10 +201,12 @@ export function SavedEventsScreen({ navigation }: SavedEventsScreenProps) {
     }, [cachedEvents, favoriteIds, isGuest, mergeCachedEvents, profile?.id]),
   );
 
+  // Inside SavedEventsScreen function
   const handleToggleFavorite = useCallback(async (eventId: string) => {
     try {
       await toggleFavorite(eventId);
       setErrorMessage(null);
+      setRemovedModalVisible(true);
     } catch (error) {
       Alert.alert('Unable to update favorites', error instanceof Error ? error.message : 'Please try again.');
     }
@@ -238,9 +243,32 @@ export function SavedEventsScreen({ navigation }: SavedEventsScreenProps) {
     <ScreenContainer bg={colors.bgDark} noPadding>
       <StatusBar style="light" />
 
+      <Modal
+        animationType="fade"
+        onRequestClose={() => setRemovedModalVisible(false)}
+        transparent
+        visible={removedModalVisible}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <View style={[styles.modalIconWrap, styles.modalIconRemoved]}>
+              <Ionicons name="heart-dislike" size={22} color="#DC2626" />
+            </View>
+            <Text style={styles.modalTitle}>Event removed</Text>
+            <Text style={styles.modalMessage}>This event has been removed from your saved list.</Text>
+            <Pressable
+              style={({ pressed }) => [styles.modalOkBtn, pressed && { opacity: 0.88 }]}
+              onPress={() => setRemovedModalVisible(false)}
+            >
+              <Text style={styles.modalOkBtnText}>OK</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
       <ScrollView
         bounces={false}
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={styles.content}
         overScrollMode="never"
         refreshControl={
           <RefreshControl
@@ -263,49 +291,47 @@ export function SavedEventsScreen({ navigation }: SavedEventsScreenProps) {
           }
         />
 
-        <View style={styles.bodySheet}>
-          <View style={styles.bodyHeader}>
-            <SectionHeader title="Favorites" />
-          </View>
+        <View style={styles.body}>
+          <View style={styles.inner}>
+            <View style={styles.bodyHeader}>
+              <SectionHeader title="Favorites" />
+            </View>
 
-          {errorMessage ? (
-            <View style={styles.emptyWrap}>
-              <Text style={styles.emptyTitle}>Couldn't load saved events</Text>
-              <Text style={styles.emptySub}>{errorMessage}</Text>
-              <Pressable
-                onPress={() => void loadSavedEvents(true)}
-                style={styles.retryBtn}
-              >
-                <Text style={styles.retryText}>Try Again</Text>
-              </Pressable>
-            </View>
-          ) : isLoading ? (
-            <View style={styles.emptyWrap}>
-              <Text style={styles.emptyTitle}>Loading saved events…</Text>
-              <Text style={styles.emptySub}>Fetching your favorites.</Text>
-            </View>
-          ) : savedEvents.length === 0 ? (
-            <View style={styles.emptyWrap}>
-              <View style={styles.emptyIllustration}>
-                <Ionicons color="rgba(255,255,255,0.7)" name="heart-outline" size={38} />
+            {savedEvents.length > 0 && !isLoading && !errorMessage ? (
+              <View style={styles.list}>
+                {savedEvents.map((event) => (
+                  <SavedEventCard
+                    event={event}
+                    key={event.id}
+                    onPress={() => navigation.navigate('EventDetail', { eventId: event.id })}
+                    onToggleFavorite={() => void handleToggleFavorite(event.id)}
+                  />
+                ))}
               </View>
-              <Text style={styles.emptyTitle}>No saved events yet</Text>
-              <Text style={styles.emptySub}>
-                Tap the heart icon on any event to save it here.
-              </Text>
-            </View>
-          ) : (
-            <View style={styles.list}>
-              {savedEvents.map((event) => (
-                <SavedEventCard
-                  event={event}
-                  key={event.id}
-                  onPress={() => navigation.navigate('EventDetail', { eventId: event.id })}
-                  onToggleFavorite={() => void handleToggleFavorite(event.id)}
-                />
-              ))}
-            </View>
-          )}
+            ) : (
+              <View style={styles.stateWrap}>
+                {errorMessage ? (
+                  <EmptyStateCard
+                    body={errorMessage}
+                    icon="cloud-offline-outline"
+                    title="Unable to load saved events"
+                  />
+                ) : isLoading ? (
+                  <EmptyStateCard
+                    body="Fetching your favorites."
+                    icon="hourglass-outline"
+                    title="Loading saved events"
+                  />
+                ) : (
+                  <EmptyStateCard
+                    body="Tap the heart icon on any event to save it here."
+                    icon="heart-outline"
+                    title="No saved events yet"
+                  />
+                )}
+              </View>
+            )}
+          </View>
         </View>
       </ScrollView>
     </ScreenContainer>
@@ -313,8 +339,9 @@ export function SavedEventsScreen({ navigation }: SavedEventsScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bgDark },
-  scroll: { flexGrow: 1 },
+  content: {
+    flexGrow: 1,
+  },
 
   guestContainer: {
     alignItems: 'center',
@@ -370,23 +397,27 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase', letterSpacing: 0.5,
   },
 
-  bodySheet: {
-    flex: 1,
+  body: {
     backgroundColor: colors.background,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
+    flexGrow: 1,
     marginTop: -12,
-    minHeight: 500,
+    paddingBottom: spacing.xxl,
+    paddingHorizontal: layout.screenPaddingH,
     paddingTop: spacing.xl,
-    paddingBottom: 100,
+  },
+  inner: {
+    gap: spacing.lg,
   },
   bodyHeader: {
-    paddingHorizontal: layout.screenPaddingH,
-    marginBottom: spacing.md,
+    // removed paddingHorizontal since body already handles it
   },
   list: {
-    paddingHorizontal: layout.screenPaddingH,
     gap: spacing.md,
+  },
+  stateWrap: {
+    alignSelf: 'stretch',
   },
 
   card: {
@@ -455,45 +486,63 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 
-  emptyWrap: {
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: layout.screenPaddingH,
-    paddingTop: spacing.xl,
+  buttonPressed: {
+    opacity: 0.85,
   },
-  emptyIllustration: {
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(2, 6, 23, 0.5)',
     alignItems: 'center',
-    borderRadius: 22,
-    backgroundColor: colors.primaryDark,
-    height: 88,
     justifyContent: 'center',
-    width: 88,
+    paddingHorizontal: 24,
   },
-  emptyTitle: {
+  modalCard: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 22,
+    alignItems: 'center',
+    gap: 10,
+  },
+  modalIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(22, 163, 74, 0.12)',
+  },
+  modalIconRemoved: {
+    backgroundColor: 'rgba(220, 38, 38, 0.12)',
+  },
+  modalTitle: {
     fontFamily: 'Inter_700Bold',
-    fontSize: 20,
-    color: '#0F172A',
+    fontSize: 18,
+    color: '#111827',
     textAlign: 'center',
   },
-  emptySub: {
-    color: '#64748B',
+  modalMessage: {
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
     lineHeight: 22,
+    color: '#4B5563',
     textAlign: 'center',
   },
-  retryBtn: {
-    alignItems: 'center',
+  modalOkBtn: {
+    marginTop: 6,
+    minWidth: 110,
+    borderRadius: 12,
     backgroundColor: colors.primary,
-    borderRadius: radius.full,
-    minHeight: 40,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    alignItems: 'center',
     justifyContent: 'center',
-    marginTop: spacing.xs,
-    paddingHorizontal: spacing.lg,
   },
-  retryText: { fontFamily: 'Inter_600SemiBold', fontSize: 13, color: '#fff' },
-
-  buttonPressed: {
-    opacity: 0.85,
+  modalOkBtnText: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 14,
+    color: '#FFFFFF',
   },
 });
