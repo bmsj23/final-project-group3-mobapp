@@ -113,6 +113,8 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
             statsAnim={statsAnim}
           />
 
+          {isGuest && <View style={styles.guestSpacer} />}
+
           <Animated.View
             style={[
               styles.body,

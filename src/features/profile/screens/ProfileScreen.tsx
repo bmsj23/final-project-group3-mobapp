@@ -393,8 +393,7 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
                     end={{ x: 1, y: 0 }}
                     style={styles.guestSignInGrad}
                   >
-                    <Text style={styles.guestSignInText}>Sign In Now</Text>
-                    <Ionicons name="arrow-forward" size={16} color="#fff" />
+                    <Text style={styles.guestSignInText}>Sign in</Text>
                   </LinearGradient>
                 </Pressable>
               </LinearGradient>
